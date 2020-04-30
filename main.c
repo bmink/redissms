@@ -1,14 +1,19 @@
 #include <stdio.h>
 #include <libgen.h>
 #include <errno.h>
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "bstr.h"
 #include "blog.h"
 #include "hiredis_helper.h"
 
 
-
 #define EXECN_SENDER	"redissms_sender"
 #define EXECN_RECEIVER	"redissms_receiver"
+#define OUT_DIR		"/var/spool/sms/outgoing"
+#define TO_PHONENR	"+16504308448"
+#define KEY_OUTBOX	"redissms:out"
 
 void sender_loop(void);
 int send_sms(bstr_t *);
@@ -65,7 +70,6 @@ end_label:
 
 
 
-#define KEY_OUTBOX	"redissms:out"
 
 void
 sender_loop(void)
@@ -92,6 +96,10 @@ sender_loop(void)
 			break;
 		}
 
+#if 0
+		blogf("msg=%s", bget(msg));
+#endif
+
 		ret = send_sms(msg);
 		if(ret != 0) {
 			blogf("Couldn't send SMS.");
@@ -104,15 +112,75 @@ sender_loop(void)
 }
 
 
-#define OUT_DIR	"/var/spool/sms/outgoing"
 
 int
 send_sms(bstr_t *msg)
 {
+	bstr_t	*filedata;
+	bstr_t	*filen;
+	bstr_t	*filen_tmp;
+	int	err;
+	int	ret;
+
 	if(bstrempty(msg))
 		return EINVAL;
 
+	err = 0;
+	filedata = NULL;
+	filen = NULL;
+	filen_tmp = NULL;
 
-	return 0;
+	filen = binit();
+	if(filen == NULL) {
+		blogf("Couldn't allocate filen");
+		err = ENOMEM;
+		goto end_label;
+	}
+
+	filen_tmp = binit();
+	if(filen_tmp == NULL) {
+		blogf("Couldn't allocate filen_tmp");
+		err = ENOMEM;
+		goto end_label;
+	}
+
+	bprintf(filen, "%s/%u.%d", OUT_DIR, time(NULL), getpid());
+	bprintf(filen_tmp, "/tmp/%u.%d", time(NULL), getpid());
+
+	filedata = binit();
+	if(filedata == NULL) {
+		blogf("Couldn't allocate filedata");
+		err = ENOMEM;
+		goto end_label;
+	}
+
+	bprintf(filedata, "To: %s\n\n%s", TO_PHONENR, bget(msg));
+
+	ret = btofile(bget(filen_tmp), filedata);
+	if(ret != 0) {
+		blogf("Couldn't write temp file: %s", bget(filen_tmp));
+		err = ret;
+		goto end_label;
+	}
+
+	ret = rename(bget(filen_tmp), bget(filen));
+	if(ret != 0) {
+		blogf("Couldn't move file to outgoing directory: %s",
+		    bget(filen));
+		err = ret;
+		goto end_label;
+	}
+
+end_label:
+
+	if(err != 0 && !bstrempty(filen_tmp))
+		unlink(bget(filen_tmp));
+
+	buninit(&filedata);
+	buninit(&filen);
+	buninit(&filen_tmp);
+
+
+	return err;
 }
 
