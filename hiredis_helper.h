@@ -19,4 +19,6 @@ int hiredis_zrange(const char *, int, int, int, barr_t *);
 int hiredis_zrange(const char *, int, int, int, barr_t *);
 int hiredis_zrem(const char *, bstr_t *, int *);
 
+int hiredis_blpop(const char *, bstr_t **);
+
 #endif

@@ -546,3 +546,85 @@ end_label:
 
 	return err;
 }
+
+
+int
+hiredis_blpop(const char *key, bstr_t **resp)
+{
+	int		err;
+	redisReply	*r;
+	redisReply	*elem;
+	bstr_t		*str;
+
+	if(rctx == NULL)
+		return ENOEXEC;
+
+	if(xstrempty(key) ||  resp == NULL)
+		return EINVAL;
+
+	err = 0;
+	r = NULL;
+	str = NULL;
+
+	r = _redisCommand("BLPOP %s 0", key);
+
+	if(r == NULL) {
+		blogf("Error while sending command to redis: NULL reply");
+		err = ENOEXEC;
+		goto end_label;
+	} else
+	if(r->type == REDIS_REPLY_ERROR) {
+		if(!xstrempty(r->str)) {
+			blogf("Error while sending command to redis: %s",
+			    r->str);
+		} else {
+			blogf("Error while sending command to redis,"
+			    " and no error string returned by redis!");
+		}
+
+		err = ENOEXEC;
+		goto end_label;
+
+	} else
+	if(r->type != REDIS_REPLY_ARRAY || r->elements != 2) {
+		blogf("Redis didn't respond with two-element array");
+		err = ENOEXEC;
+		goto end_label;
+	} else {
+		elem = r->element[1];
+		if(elem->type != REDIS_REPLY_STRING) {
+			blogf("Element is not string");
+			err = EINVAL;
+			goto end_label;
+		}
+		if(xstrempty(elem->str)) {
+			blogf("Element is invalid string");
+			err = ENOENT;
+			goto end_label;
+		}
+
+		str = binit();
+		if(str == NULL) {
+			blogf("Couldn't allocate str");
+			err = ENOMEM;
+			goto end_label;
+		}
+		bstrcat(str, elem->str);
+	}
+
+end_label:
+
+	if(r != NULL) {
+		freeReplyObject(r);
+		r = NULL;
+	}
+
+	if(err == 0)
+		*resp = str;
+	else
+		buninit(&str);
+
+	return err;
+}
+
+
