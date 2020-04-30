@@ -1,3 +1,4 @@
 *.o
-redissms
+redissms_sender
+redissms_receiver
 *.swp
