@@ -229,7 +229,19 @@ receive_sms(const char *filen)
 		goto end_label;
 	}
 
+#if 0
 	blogf("msg=\n%s\n", bget(msg));
+#endif
+
+	ret = xstrstr(bget(msg), "\n\n");	
+	if(ret < 0) {
+		blogf("msg didn't contain body");
+		err = ENOENT;
+		goto end_label;
+	}
+	bstrchopl(msg, ret + 2);
+
+	send_sms(msg);
 
 end_label:
 
