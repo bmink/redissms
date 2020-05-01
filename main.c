@@ -17,6 +17,7 @@
 
 void sender_loop(void);
 int send_sms(bstr_t *);
+int receive_sms(const char *);
 
 int
 main(int argc, char **argv)
@@ -53,6 +54,22 @@ main(int argc, char **argv)
 
 	} else
 	if(!xstrcmp(execn, EXECN_RECEIVER)) {
+
+		if(argc != 3) {
+			blogf("Invalid argument count");
+			goto end_label;
+		}
+
+		if(xstrcmp(argv[1], "RECEIVED"))
+			goto end_label;
+
+		ret = receive_sms(argv[2]);
+		if(ret != 0) {
+			blogf("Couldn't receive SMS");
+			goto end_label;
+		}
+		
+
 	} else {
 		fprintf(stderr, "Do not recognize executable name.\n");
 		goto end_label;
@@ -184,3 +201,39 @@ end_label:
 	return err;
 }
 
+
+int
+receive_sms(const char *filen)
+{
+	bstr_t	*msg;
+	int	err;
+	int	ret;
+
+	if(xstrempty(filen))
+		return EINVAL;
+
+	err = 0;
+	msg = NULL;
+
+	msg = binit();
+	if(!msg) {
+		blogf("Couldn't init msg");
+		err = ENOMEM;
+		goto end_label;
+	}
+
+	ret = bfromfile(msg, filen);
+	if(ret != 0) {
+		blogf("Couldn't load msg");
+		err = ret;
+		goto end_label;
+	}
+
+	blogf("msg=\n%s\n", bget(msg));
+
+end_label:
+
+	buninit(&msg);
+
+	return err;	
+}
