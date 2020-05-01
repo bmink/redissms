@@ -2,3 +2,4 @@
 redissms_sender
 redissms_receiver
 *.swp
+nohup.out
