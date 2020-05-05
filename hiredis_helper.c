@@ -628,3 +628,107 @@ end_label:
 }
 
 
+
+int
+hiredis_lpush(const char *key, bstr_t *elem)
+{
+	int		err;
+	redisReply	*r;
+
+	if(rctx == NULL)
+		return ENOEXEC;
+
+	if(xstrempty(key) || bstrempty(elem))
+		return EINVAL;
+
+	err = 0;
+	r = NULL;
+
+	r = _redisCommand("LPUSH %s", key, bget(elem));
+
+	if(r == NULL) {
+		blogf("Error while sending command to redis: NULL reply");
+		err = ENOEXEC;
+		goto end_label;
+	} else
+	if(r->type == REDIS_REPLY_ERROR) {
+		if(!xstrempty(r->str)) {
+			blogf("Error while sending command to redis: %s",
+			    r->str);
+		} else {
+			blogf("Error while sending command to redis,"
+			    " and no error string returned by redis!");
+		}
+
+		err = ENOEXEC;
+		goto end_label;
+
+	} else
+	if(r->type != REDIS_REPLY_INTEGER) {
+		blogf("Redis didn't respond with integer");
+		err = ENOEXEC;
+		goto end_label;
+	}
+
+end_label:
+
+	if(r != NULL) {
+		freeReplyObject(r);
+		r = NULL;
+	}
+
+	return err;
+}
+
+
+int
+hiredis_rpush(const char *key, bstr_t *elem)
+{
+	int		err;
+	redisReply	*r;
+
+	if(rctx == NULL)
+		return ENOEXEC;
+
+	if(xstrempty(key) || bstrempty(elem))
+		return EINVAL;
+
+	err = 0;
+	r = NULL;
+
+	r = _redisCommand("RPUSH %s", key, bget(elem));
+
+	if(r == NULL) {
+		blogf("Error while sending command to redis: NULL reply");
+		err = ENOEXEC;
+		goto end_label;
+	} else
+	if(r->type == REDIS_REPLY_ERROR) {
+		if(!xstrempty(r->str)) {
+			blogf("Error while sending command to redis: %s",
+			    r->str);
+		} else {
+			blogf("Error while sending command to redis,"
+			    " and no error string returned by redis!");
+		}
+
+		err = ENOEXEC;
+		goto end_label;
+
+	} else
+	if(r->type != REDIS_REPLY_INTEGER) {
+		blogf("Redis didn't respond with integer");
+		err = ENOEXEC;
+		goto end_label;
+	}
+
+end_label:
+
+	if(r != NULL) {
+		freeReplyObject(r);
+		r = NULL;
+	}
+
+	return err;
+}
+

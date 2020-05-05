@@ -14,6 +14,7 @@
 #define OUT_DIR		"/var/spool/sms/outgoing"
 #define TO_PHONENR	"+16504308448"
 #define KEY_OUTBOX	"redissms:out"
+#define KEY_INBOX	"redissms:in"
 
 void sender_loop(void);
 int send_sms(bstr_t *);
