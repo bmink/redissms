@@ -242,7 +242,12 @@ receive_sms(const char *filen)
 	}
 	bstrchopl(msg, ret + 2);
 
-	send_sms(msg);
+	ret = hiredis_rpush(KEY_INBOX, msg);
+	if(ret != 0) {
+		blogf("Couldn't put msg into inbox");
+		err = ret;
+		goto end_label;
+	}
 
 end_label:
 

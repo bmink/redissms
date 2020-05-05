@@ -644,7 +644,7 @@ hiredis_lpush(const char *key, bstr_t *elem)
 	err = 0;
 	r = NULL;
 
-	r = _redisCommand("LPUSH %s", key, bget(elem));
+	r = _redisCommand("LPUSH %s %s", key, bget(elem));
 
 	if(r == NULL) {
 		blogf("Error while sending command to redis: NULL reply");
@@ -696,7 +696,7 @@ hiredis_rpush(const char *key, bstr_t *elem)
 	err = 0;
 	r = NULL;
 
-	r = _redisCommand("RPUSH %s", key, bget(elem));
+	r = _redisCommand("RPUSH %s %s", key, bget(elem));
 
 	if(r == NULL) {
 		blogf("Error while sending command to redis: NULL reply");
