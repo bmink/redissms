@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Install this script in crontab to run once per minute.
+# Install this script in crontab to run every minute.
 #
 
 if [[ ! $(pidof redissms_sender) ]]; then
