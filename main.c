@@ -4,6 +4,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <sys/time.h>
 #include "bstr.h"
 #include "blog.h"
 #include "hiredis_helper.h"
@@ -23,8 +25,9 @@ int receive_sms(const char *);
 int
 main(int argc, char **argv)
 {
-	char	*execn;
-	int	ret;
+	char		*execn;
+	int		ret;
+	struct timeval	now;
 
 	execn = basename(argv[0]);
 	if(xstrempty(execn)) {
@@ -44,6 +47,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "Could not connect to redis\n");
 		goto end_label;
 	}
+
+	gettimeofday(&now, NULL);
+     	srandom((now.tv_sec * 1000) + (now.tv_usec / 1000));
 
 	if(!xstrcmp(execn, EXECN_SENDER)) {
 		if(argc != 1) {
@@ -98,7 +104,7 @@ sender_loop(void)
 	msg = NULL;
 
 	while(1) {
-		ret = hiredis_blpop(KEY_OUTBOX, &msg);
+		ret = hiredis_blpop(KEY_OUTBOX, 0, &msg);
 		if(ret != 0) {
 			blogf("Error while BLPOPing");	
 			break;
@@ -162,8 +168,8 @@ send_sms(bstr_t *msg)
 		goto end_label;
 	}
 
-	bprintf(filen, "%s/%u.%d", OUT_DIR, time(NULL), getpid());
-	bprintf(filen_tmp, "/tmp/%u.%d", time(NULL), getpid());
+	bprintf(filen, "%s/%u.%d.%d", OUT_DIR, time(NULL), getpid(), random());
+	bprintf(filen_tmp, "/tmp/%u.%d.%d", time(NULL), getpid(), random());
 
 	filedata = binit();
 	if(filedata == NULL) {
