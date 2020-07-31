@@ -14,7 +14,7 @@
 #define EXECN_SENDER	"redissms_sender"
 #define EXECN_RECEIVER	"redissms_receiver"
 #define OUT_DIR		"/var/spool/sms/outgoing"
-#define TO_PHONENR	"+16504308448"
+#define TO_PHONENR	"+1xxxxxxxxxx"
 #define KEY_OUTBOX	"redissms:out"
 #define KEY_INBOX	"redissms:in"
 
